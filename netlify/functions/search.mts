@@ -23,10 +23,6 @@ function json(data: unknown, status = 200) {
 }
 
 export default async (req: Request) => {
-  if (req.headers.get('x-requested-with') !== 'XMLHttpRequest') {
-    return json({ status: false, message: 'Forbidden. API is protected from scraping.' }, 403);
-  }
-
   const url = new URL(req.url);
   const query = (url.searchParams.get('query') || '').trim();
   const cacheKey = 'search_' + query;

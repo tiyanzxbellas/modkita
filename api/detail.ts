@@ -1,4 +1,3 @@
-import axios from 'axios';
 import * as cheerio from 'cheerio';
 
 const apiCache = new Map<string, { data: unknown; time: number }>();
@@ -26,23 +25,18 @@ const UA = [
 ];
 
 async function fetchAn1(url: string) {
-  const { data } = await axios.get(url, {
+  const res = await fetch(url, {
     headers: { 'User-Agent': UA[Math.floor(Math.random() * UA.length)], Accept: 'text/html', Origin: 'https://an1.com' },
-    timeout: 30000,
-    maxRedirects: 5,
   });
-  return data as string;
+  if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`);
+  return await res.text();
 }
 
 export const config = {
-  runtime: 'nodejs',
+  runtime: 'edge',
 };
 
 export default async (req: Request) => {
-  if (req.headers.get('x-requested-with') !== 'XMLHttpRequest') {
-    return json({ status: false, message: 'Forbidden. API is protected from scraping.' }, 403);
-  }
-
   const url = new URL(req.url);
   const id = (url.searchParams.get('id') || '').trim();
   const cacheKey = 'detail_' + id;
@@ -67,8 +61,8 @@ export default async (req: Request) => {
 
     if (!mainHtml) {
       try {
-        const dw = await fetchAn1(`https://an1.com/file_${id}-dw.html`);
-        const m = dw.match(/<a[^>]*class="[^"]*btn-back[^"]*"[^>]*href="([^"]+)"[^>]*>/);
+        const dwHtml = await fetchAn1(`https://an1.com/file_${id}-dw.html`);
+        const m = dwHtml.match(/<a[^>]*class="[^"]*btn-back[^"]*"[^>]*href="([^"]+)"[^>]*>/);
         if (m) {
           const bu = m[1].startsWith('https://') ? m[1] : 'https://an1.com' + m[1];
           mainHtml = await fetchAn1(bu);

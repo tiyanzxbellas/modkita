@@ -2,11 +2,8 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import type { Config } from '@netlify/functions';
 
-// NOTE: in-memory cache only persists for the lifetime of a warm function
-// instance (not guaranteed across invocations) — same trade-off the original
-// Express server had, just less predictable in a serverless environment.
 const apiCache = new Map<string, { data: unknown; time: number }>();
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const CACHE_TTL = 10 * 60 * 1000;
 
 function getCached(key: string) {
   const item = apiCache.get(key);
@@ -25,11 +22,6 @@ function json(data: unknown, status = 200) {
 }
 
 export default async (req: Request) => {
-  // Anti-scraping guard (mirrors the original Express middleware).
-  if (req.headers.get('x-requested-with') !== 'XMLHttpRequest') {
-    return json({ status: false, message: 'Forbidden. API is protected from scraping.' }, 403);
-  }
-
   const url = new URL(req.url);
   const page = parseInt(url.searchParams.get('page') || '1', 10) || 1;
   const targetUrl = page === 1 ? 'https://an1.com/tags/mods/' : `https://an1.com/tags/mods/page/${page}/`;

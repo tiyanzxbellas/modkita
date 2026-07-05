@@ -1,10 +1,7 @@
-import axios from 'axios';
 import * as cheerio from 'cheerio';
 
-// NOTE: in-memory cache only persists for the lifetime of a warm function
-// instance (not guaranteed across invocations).
 const apiCache = new Map<string, { data: unknown; time: number }>();
-const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+const CACHE_TTL = 10 * 60 * 1000;
 
 function getCached(key: string) {
   const item = apiCache.get(key);
@@ -23,15 +20,10 @@ function json(data: unknown, status = 200) {
 }
 
 export const config = {
-  runtime: 'nodejs',
+  runtime: 'edge',
 };
 
 export default async (req: Request) => {
-  // Anti-scraping guard (mirrors the original Express middleware).
-  if (req.headers.get('x-requested-with') !== 'XMLHttpRequest') {
-    return json({ status: false, message: 'Forbidden. API is protected from scraping.' }, 403);
-  }
-
   const url = new URL(req.url);
   const page = parseInt(url.searchParams.get('page') || '1', 10) || 1;
   const targetUrl = page === 1 ? 'https://an1.com/tags/mods/' : `https://an1.com/tags/mods/page/${page}/`;
@@ -40,13 +32,15 @@ export default async (req: Request) => {
   if (cached) return json(cached);
 
   try {
-    const { data } = await axios.get(targetUrl, {
+    const res = await fetch(targetUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36',
         Accept: 'text/html',
       },
-      timeout: 20000,
     });
+
+    if (!res.ok) throw new Error(`Failed to fetch from an1.com: ${res.status}`);
+    const data = await res.text();
 
     const $ = cheerio.load(data);
     const results: any[] = [];
