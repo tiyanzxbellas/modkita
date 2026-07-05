@@ -15,3 +15,32 @@
   }
 }
 
+html, body {
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  touch-action: none;
+}
+
+#main-content {
+  touch-action: pan-y;
+}
+
+#app {
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Container for lists */
+.list-container {
+  width: 100%;
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
