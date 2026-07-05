@@ -1,6 +1,4 @@
-import axios from 'axios';
 import * as cheerio from 'cheerio';
-import qs from 'querystring';
 
 const apiCache = new Map<string, { data: unknown; time: number }>();
 const CACHE_TTL = 10 * 60 * 1000;
@@ -22,14 +20,10 @@ function json(data: unknown, status = 200) {
 }
 
 export const config = {
-  runtime: 'nodejs',
+  runtime: 'edge',
 };
 
 export default async (req: Request) => {
-  if (req.headers.get('x-requested-with') !== 'XMLHttpRequest') {
-    return json({ status: false, message: 'Forbidden. API is protected from scraping.' }, 403);
-  }
-
   const url = new URL(req.url);
   const query = (url.searchParams.get('query') || '').trim();
   const cacheKey = 'search_' + query;
@@ -40,19 +34,27 @@ export default async (req: Request) => {
   }
 
   try {
-    const { data } = await axios.post(
-      'https://an1.com/index.php?do=search',
-      qs.stringify({ do: 'search', subaction: 'search', story: query, search_start: 0, full_search: 0, result_from: 1 }),
-      {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36',
-          'Content-Type': 'application/x-www-form-urlencoded',
-          Origin: 'https://an1.com',
-          Referer: 'https://an1.com/index.php?do=search',
-        },
-        timeout: 30000,
-      }
-    );
+    const body = new URLSearchParams();
+    body.append('do', 'search');
+    body.append('subaction', 'search');
+    body.append('story', query);
+    body.append('search_start', '0');
+    body.append('full_search', '0');
+    body.append('result_from', '1');
+
+    const res = await fetch('https://an1.com/index.php?do=search', {
+      method: 'POST',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131.0.0.0 Safari/537.36',
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Origin: 'https://an1.com',
+        Referer: 'https://an1.com/index.php?do=search',
+      },
+      body: body.toString()
+    });
+
+    if (!res.ok) throw new Error(`Failed to fetch from an1.com: ${res.status}`);
+    const data = await res.text();
 
     const $ = cheerio.load(data);
     const totalMatch = data.match(/Found (\d+) (?:apps|games|results)/);

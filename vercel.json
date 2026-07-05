@@ -2,8 +2,20 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "source": "/api/home",
+      "destination": "/api/home"
+    },
+    {
+      "source": "/api/search",
+      "destination": "/api/search"
+    },
+    {
+      "source": "/api/detail",
+      "destination": "/api/detail"
+    },
+    {
+      "source": "/api/download",
+      "destination": "/api/download"
     },
     {
       "source": "/((?!api/).*)",

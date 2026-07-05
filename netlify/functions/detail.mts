@@ -36,10 +36,6 @@ async function fetchAn1(url: string) {
 }
 
 export default async (req: Request) => {
-  if (req.headers.get('x-requested-with') !== 'XMLHttpRequest') {
-    return json({ status: false, message: 'Forbidden. API is protected from scraping.' }, 403);
-  }
-
   const url = new URL(req.url);
   const id = (url.searchParams.get('id') || '').trim();
   const cacheKey = 'detail_' + id;
