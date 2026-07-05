@@ -65,6 +65,22 @@ window.addEventListener('appinstalled', () => {
   (window as any).deferredInstallPrompt = null;
 });
 
+// Disable zoom via JS as a fallback
+document.addEventListener('touchstart', (e) => {
+  if (e.touches.length > 1) {
+    e.preventDefault();
+  }
+}, { passive: false });
+
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+  const now = (new Date()).getTime();
+  if (now - lastTouchEnd <= 300) {
+    e.preventDefault();
+  }
+  lastTouchEnd = now;
+}, false);
+
 // SVGs
 const icons = {
   sun: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>`,
@@ -240,8 +256,10 @@ async function renderHome() {
     if (data.status) {
       homeTotalPages = data.result.total_pages;
       
-      let html = `<div class="p-4 pb-8 space-y-4"><h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Latest Mods</h2>`;
+      let html = `<div class="list-container pb-8 space-y-4 pt-4"><h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Latest Mods</h2>`;
       
+      html += `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">`;
+
       data.result.games.forEach((g: any) => {
         html += `
           <div onclick="window.router.navigate('detail', '${g.id}')" class="cursor-pointer flex items-center gap-4 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-2xl border border-gray-100 dark:border-gray-800 hover:bg-green-50 dark:hover:bg-gray-800 transition active:scale-[0.98]">
@@ -256,6 +274,8 @@ async function renderHome() {
           </div>
         `;
       });
+
+      html += `</div>`;
 
       html += `
         <div class="flex justify-between items-center mt-8 pt-4 border-t border-gray-100 dark:border-gray-800">
@@ -276,8 +296,8 @@ async function renderSearch() {
   headerLeft.innerHTML = `<h1 class="text-xl font-bold text-green-500 tracking-tight">Search</h1>`;
   
   mainContent.innerHTML = `
-    <div class="p-4">
-      <form id="search-form" class="relative mb-6">
+    <div class="list-container pt-4">
+      <form id="search-form" class="relative mb-6 max-w-2xl mx-auto">
         <input type="text" id="search-input" placeholder="Cari game atau mod..." class="w-full pl-11 pr-4 py-3.5 rounded-2xl bg-gray-100 dark:bg-gray-800 border-none focus:ring-2 focus:ring-green-500 text-gray-900 dark:text-white outline-none transition" />
         <div class="absolute left-4 top-3.5 text-gray-400">${icons.search}</div>
       </form>
@@ -300,7 +320,7 @@ async function renderSearch() {
           return;
         }
 
-        let html = `<div class="space-y-3">`;
+        let html = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">`;
         data.result.results.forEach((g: any) => {
           html += `
             <div onclick="window.router.navigate('detail', '${g.id}')" class="cursor-pointer flex items-center gap-4 bg-gray-50 dark:bg-gray-800/50 p-3 rounded-2xl border border-gray-100 dark:border-gray-800 hover:bg-green-50 dark:hover:bg-gray-800 transition active:scale-[0.98]">
@@ -355,7 +375,7 @@ async function renderInfo() {
   };
 
   mainContent.innerHTML = `
-    <div class="p-6">
+    <div class="list-container py-6">
       <div class="flex flex-col items-center text-center mb-8 pt-4">
         <div class="w-28 h-28 flex items-center justify-center mb-4">
           <img id="info-logo" src="${isDark ? '/cerah.png' : '/gelap.png'}" class="w-full h-full rounded-full object-cover drop-shadow-md" alt="ModKita Logo" />
@@ -413,7 +433,7 @@ async function renderDetail(id: string) {
     const g = data.result;
     
     let html = `
-      <div class="pb-10">
+      <div class="list-container pb-10">
         <!-- Hero Image Background -->
         <div class="relative h-48 w-full bg-gray-200 dark:bg-gray-800 mb-12">
             ${g.screenshots && g.screenshots.length > 0 
