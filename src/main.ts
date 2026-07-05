@@ -76,7 +76,11 @@ let lastTouchEnd = 0;
 document.addEventListener('touchend', (e) => {
   const now = (new Date()).getTime();
   if (now - lastTouchEnd <= 300) {
-    e.preventDefault();
+    // Only prevent default if it's not a button or clickable element
+    const target = e.target as HTMLElement;
+    if (!['BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName) && !target.closest('button, a, [onclick]')) {
+      e.preventDefault();
+    }
   }
   lastTouchEnd = now;
 }, false);
