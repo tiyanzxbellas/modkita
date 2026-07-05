@@ -18,3 +18,9 @@ View your app in AI Studio: https://ai.studio/apps/7d6f1a21-8dbf-4740-a5d0-397b6
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Deploy
+
+Proyek ini mendukung deployment di:
+- [Netlify](NETLIFY_DEPLOY.md)
+- [Vercel](VERCEL_DEPLOY.md)
